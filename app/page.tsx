@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import QRCode from 'qrcode'
 import {
   ArrowUpRight,
   BatteryCharging,
@@ -112,7 +111,7 @@ function IconoRed({ name, className = 'size-5' }: { name: string; className?: st
 
 /** Logotipo oficial "iRepair Arequipa": negro sobre claro, blanco sobre oscuro. */
 function Logo({ claro = false, className = 'h-9' }: { claro?: boolean; className?: string }) {
-  return <img src={claro ? '/logo-irepair-blanco.png' : '/logo-irepair-negro.png'} alt="iRepair Arequipa" className={`w-auto ${className}`} />
+  return <img src={claro ? '/logo-irepair-blanco.png' : '/logo-irepair-negro.png'} alt="iRepair Arequipa" width={560} height={150} decoding="async" className={`w-auto ${className}`} />
 }
 
 /** Pistas de circuito decorativas (el detalle tecnológico). */
@@ -147,9 +146,10 @@ function Celular3D() {
     const t = setInterval(() => setEtapa((e) => (e + 1) % etapas.length), 1800)
     return () => clearInterval(t)
   }, [etapas.length])
+  const ref = usePausarFueraDePantalla<HTMLDivElement>()
 
   return (
-    <div className="escena-3d relative mx-auto" aria-hidden="true">
+    <div ref={ref} className="escena-3d relative mx-auto" aria-hidden="true">
       <div className="absolute inset-x-6 -inset-y-6 rounded-[3rem] bg-dorado/25 blur-3xl" />
       <div className="cel-3d">
         <div className="cel-cara cel-atras">
@@ -160,10 +160,10 @@ function Celular3D() {
           </div>
           <img src="/logo-irepair-blanco.png" alt="" className="absolute bottom-[18%] left-1/2 w-[62%] -translate-x-1/2 opacity-90" />
         </div>
-        <span className="cel-lado cel-lado-der" />
-        <span className="cel-lado cel-lado-izq" />
-        <span className="cel-lado cel-lado-sup" />
-        <span className="cel-lado cel-lado-inf" />
+        {/* Canto: capas redondeadas apiladas en profundidad (bordes curvos, como un celular real) */}
+        {Array.from({ length: 9 }, (_, i) => (
+          <span key={i} className="cel-capa" style={{ ["--i" as string]: i } as React.CSSProperties} />
+        ))}
         <div className="cel-cara cel-frente">
           <span className="cel-brillo" />
           <div className="absolute left-1/2 top-3 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-negro" />
@@ -191,6 +191,38 @@ function Celular3D() {
       <div className="cel-sombra" />
     </div>
   )
+}
+
+/** Mapa de Google que solo se carga al tocarlo (cada mapa pesa varios MB: en celular se nota). */
+function MapaDiferido({ src, nombre }: { src: string; nombre: string }) {
+  const [cargar, setCargar] = useState(false)
+  if (cargar) return <iframe src={src} title={`Ubicación de iRepair en ${nombre}`} referrerPolicy="no-referrer-when-downgrade" className="h-44 w-full border-0" />
+  return (
+    <button
+      type="button"
+      onClick={() => setCargar(true)}
+      className="mapa-vista group flex h-44 w-full flex-col items-center justify-center gap-2 text-sm font-semibold text-negro"
+      aria-label={`Ver el mapa de la sede ${nombre}`}
+    >
+      <span className="grid size-12 place-items-center rounded-full bg-negro text-salmon shadow-lg transition group-active:scale-95">
+        <MapPin className="size-6" aria-hidden="true" />
+      </span>
+      Toca para ver el mapa
+    </button>
+  )
+}
+
+/** Pausa las animaciones de un bloque mientras no está en pantalla (ahorra batería en celular). */
+function usePausarFueraDePantalla<T extends HTMLElement>() {
+  const ref = useRef<T>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => el.classList.toggle('pausado', !e.isIntersecting))
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return ref
 }
 
 type Diapositiva = {
@@ -295,11 +327,16 @@ function Carrusel({ alElegir }: { alElegir: (accion: Diapositiva['accion']) => v
       setActual(Math.round(el.scrollLeft / (ancho + 16)))
     }
     el.addEventListener('scroll', alMover, { passive: true })
+    // Solo avanza solo cuando se ve en pantalla.
+    let visible = false
+    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting))
+    io.observe(el)
     const t = setInterval(() => {
-      if (!pausa.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) ir(actualRef.current + 1)
+      if (visible && !pausa.current && !document.hidden && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) ir(actualRef.current + 1)
     }, 4500)
     return () => {
       el.removeEventListener('scroll', alMover)
+      io.disconnect()
       clearInterval(t)
     }
   }, [ir])
@@ -382,13 +419,13 @@ export default function Page() {
 
   useEffect(() => {
     if (!verQr || qr) return
-    QRCode.toDataURL(PAGINA, { width: 480, margin: 2, color: { dark: '#161616', light: '#ffffff' } }).then(setQr)
+    import('qrcode').then(({ default: QRCode }) => QRCode.toDataURL(PAGINA, { width: 480, margin: 2, color: { dark: '#161616', light: '#ffffff' } }).then(setQr))
   }, [verQr, qr])
 
   return (
     <main className="madera-fondo min-h-screen pb-28 text-negro lg:pb-0">
       {/* Menú superior */}
-      <header className="sticky top-0 z-40 border-b border-negro/10 bg-blanco/90 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-negro/10 bg-blanco/95">
         <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <a href="#inicio" aria-label="iRepair Arequipa, inicio">
             <Logo />
@@ -462,7 +499,7 @@ export default function Page() {
               key={a.label}
               href={a.href}
               {...(a.externo ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="flex min-w-[118px] shrink-0 flex-col items-center gap-2 rounded-2xl bg-negro/90 px-3 py-4 text-center text-xs font-semibold text-blanco shadow-lg backdrop-blur transition hover:-translate-y-1 hover:bg-negro"
+              className="flex min-w-[118px] shrink-0 flex-col items-center gap-2 rounded-2xl bg-negro/90 px-3 py-4 text-center text-xs font-semibold text-blanco shadow-lg transition hover:-translate-y-1 hover:bg-negro"
             >
               <span className="grid size-11 place-items-center rounded-xl bg-salmon text-negro">{a.icono}</span>
               {a.label}
@@ -615,7 +652,7 @@ export default function Page() {
                     <MapPin className="size-5" strokeWidth={1.8} aria-hidden="true" />
                   </span>
                 </div>
-                <iframe src={s.mapSrc} title={`Ubicación de iRepair en ${s.nombre}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-44 w-full border-0" />
+                <MapaDiferido src={s.mapSrc} nombre={s.nombre} />
                 <div className="grid grid-cols-2 gap-2 p-4">
                   <a href={wa(s, `Hola iRepair, quiero información de la sede ${s.nombre}.`)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-negro px-3 py-3 text-sm font-semibold text-blanco transition hover:bg-black">
                     <MessageCircle className="size-4" aria-hidden="true" /> WhatsApp
@@ -684,7 +721,7 @@ export default function Page() {
 
       {/* Menú inferior para celular */}
       <nav aria-label="Acciones rápidas" className="fixed inset-x-3 bottom-3 z-40 lg:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-[1fr_1fr_1.5fr_1fr] items-center gap-1 rounded-full border border-blanco/10 bg-negro/95 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,.55)] backdrop-blur-xl">
+        <div className="mx-auto grid max-w-md grid-cols-[1fr_1fr_1.5fr_1fr] items-center gap-1 rounded-full border border-blanco/10 bg-negro/95 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,.55)]">
           <a href="#servicios" className="flex flex-col items-center gap-0.5 rounded-full py-1.5 text-[10px] font-semibold text-blanco/70 active:text-salmon">
             <Wrench className="size-5 text-salmon" aria-hidden="true" /> Servicios
           </a>
@@ -701,7 +738,7 @@ export default function Page() {
       </nav>
 
       {verQr && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-negro/70 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="qr-titulo" onClick={() => setVerQr(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-negro/75 p-5" role="dialog" aria-modal="true" aria-labelledby="qr-titulo" onClick={() => setVerQr(false)}>
           <div className="w-full max-w-sm rounded-3xl bg-blanco p-6 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-start justify-between text-left">
               <div>

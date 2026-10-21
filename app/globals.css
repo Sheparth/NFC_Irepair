@@ -58,9 +58,9 @@ body {
 }
 
 /* ── Celular 3D (solo CSS: se dibuja en la GPU, no descarga nada) ── */
-.escena-3d { --w: 230px; --h: 470px; --t: 22px; width: var(--w); height: calc(var(--h) + 60px); perspective: 1400px; }
+.escena-3d { --w: 230px; --h: 470px; --t: 16px; width: var(--w); height: calc(var(--h) + 60px); perspective: 1400px; }
 @media (min-width: 640px) { .escena-3d { --w: 250px; --h: 510px; } }
-.cel-3d { position: relative; width: var(--w); height: var(--h); transform-style: preserve-3d; animation: girar 14s cubic-bezier(.45, .05, .55, .95) infinite; }
+.cel-3d { position: relative; width: var(--w); height: var(--h); transform-style: preserve-3d; will-change: transform; animation: girar 14s cubic-bezier(.45, .05, .55, .95) infinite; }
 .escena-3d:hover .cel-3d, .escena-3d:active .cel-3d { animation-play-state: paused; }
 @keyframes girar {
   0% { transform: rotateX(8deg) rotateY(-28deg); }
@@ -79,18 +79,30 @@ body {
 .cel-camaras span:nth-child(1) { left: 8%; top: 8%; }
 .cel-camaras span:nth-child(2) { left: 8%; bottom: 8%; }
 .cel-camaras span:nth-child(3) { right: 8%; top: 31%; }
-.cel-lado { position: absolute; background: linear-gradient(90deg, #2b2b2b, #6b6b6b 45%, #2b2b2b); }
-.cel-lado-der, .cel-lado-izq { top: 2.2rem; bottom: 2.2rem; width: var(--t); left: calc(50% - var(--t) / 2); }
-.cel-lado-der { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); }
-.cel-lado-izq { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
-.cel-lado-sup, .cel-lado-inf { left: 2.2rem; right: 2.2rem; height: var(--t); top: calc(50% - var(--t) / 2); background: linear-gradient(180deg, #2b2b2b, #6b6b6b 45%, #2b2b2b); }
-.cel-lado-sup { transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); }
-.cel-lado-inf { transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); }
+/* Canto: 9 capas redondeadas entre el frente y la espalda (metal con luz al centro) */
+.cel-capa { position: absolute; inset: 0; border-radius: 2.4rem; background: #3a3a3a; border: 3px solid #8f8f8f;
+  transform: translateZ(calc((var(--i) / 8 - .5) * (var(--t) - 2px))); }
+/* Brillo del metal hacia el centro del canto */
+.cel-capa:nth-of-type(4), .cel-capa:nth-of-type(6) { border-color: #b3b3b3; }
+.cel-capa:nth-of-type(5) { border-color: #d0d0d0; }
 .cel-brillo { position: absolute; inset: 0; z-index: 20; pointer-events: none; border-radius: inherit;
   background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / .22) 45%, transparent 60%); background-size: 250% 100%; animation: brillo 7s ease-in-out infinite; }
 @keyframes brillo { 0%, 100% { background-position: 120% 0; } 50% { background-position: -20% 0; } }
 .cel-sombra { margin: 26px auto 0; width: 70%; height: 22px; border-radius: 50%; background: rgb(0 0 0 / .35); filter: blur(10px); animation: sombra 14s ease-in-out infinite; }
 @keyframes sombra { 0%, 100% { transform: scaleX(.85); } 50% { transform: scaleX(1); } }
+
+/* Fuera de pantalla no se anima (ahorra batería) */
+.pausado .cel-3d, .pausado .cel-brillo, .pausado .cel-sombra { animation-play-state: paused; }
+
+/* Vista previa del mapa (el mapa real se carga al tocarla) */
+.mapa-vista {
+  background-color: var(--color-crema);
+  background-image:
+    linear-gradient(25deg, transparent 46%, rgb(255 255 255 / .9) 46% 54%, transparent 54%),
+    linear-gradient(115deg, transparent 47%, rgb(255 255 255 / .8) 47% 52%, transparent 52%),
+    repeating-linear-gradient(0deg, transparent 0 34px, rgb(176 138 94 / .18) 34px 35px),
+    repeating-linear-gradient(90deg, transparent 0 34px, rgb(176 138 94 / .18) 34px 35px);
+}
 
 /* ── Transiciones al bajar ── */
 .revelar { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .8, .2, 1); }
