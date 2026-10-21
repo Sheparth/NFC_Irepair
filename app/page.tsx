@@ -108,14 +108,9 @@ function IconoRed({ name, className = 'size-5' }: { name: string; className?: st
   )
 }
 
-/** Logotipo oficial: solo la palabra "iRepair" (nunca con manzana, nunca en mayúsculas). */
-function Logo({ claro = false }: { claro?: boolean }) {
-  return (
-    <span className="inline-flex flex-col items-start leading-none">
-      <span className={`font-display text-[1.7rem] font-semibold tracking-[-0.04em] ${claro ? 'text-blanco' : 'text-negro'}`}>iRepair</span>
-      <span className="mt-1 text-[9px] font-medium uppercase tracking-[0.42em] text-dorado">Arequipa</span>
-    </span>
-  )
+/** Logotipo oficial "iRepair Arequipa" (sin manzana, según el manual): negro sobre claro, blanco sobre oscuro. */
+function Logo({ claro = false, className = 'h-9' }: { claro?: boolean; className?: string }) {
+  return <img src={claro ? '/logo-irepair-blanco.png' : '/logo-irepair-negro.png'} alt="iRepair Arequipa" className={`w-auto ${className}`} />
 }
 
 /** Pistas de circuito decorativas (el detalle tecnológico). */
@@ -456,7 +451,7 @@ export default function Page() {
       <footer className="bg-negro text-blanco">
         <div className="h-px bg-dorado" />
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-8">
-          <Logo claro />
+          <Logo claro className="h-12" />
           <p className="font-display text-lg font-semibold">Tráelo hoy, lo tenemos listo hoy.</p>
         </div>
       </footer>
