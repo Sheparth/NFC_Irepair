@@ -674,7 +674,8 @@ export default function Page() {
             <p className="text-sm font-semibold text-roble">Redes</p>
             <h2 className="mt-1 font-display text-3xl font-bold leading-[1.2] sm:text-4xl">Mira nuestro trabajo</h2>
             <p className="mt-2 text-negro/70">Reparaciones reales, antes y después.</p>
-            <div className="mt-6 grid grid-cols-3 gap-3">
+            {/* En celular: filas a todo el ancho (nombre y usuario completos); en pantallas grandes: 3 columnas */}
+            <div className="mt-6 grid gap-2.5 lg:grid-cols-3 lg:gap-3">
               {redes.map((r) => (
                 <a
                   key={r.label}
@@ -682,13 +683,16 @@ export default function Page() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={`${r.label} de iRepair Arequipa`}
-                  className="flex min-h-24 flex-col justify-between rounded-2xl bg-negro p-4 text-blanco transition hover:-translate-y-1 hover:bg-black"
+                  className="group flex items-center gap-4 rounded-2xl bg-negro px-4 py-3.5 text-blanco transition hover:bg-black active:scale-[0.99] lg:min-h-28 lg:flex-col lg:items-start lg:justify-between lg:p-4"
                 >
-                  <IconoRed name={r.icon} className="size-6 text-salmon" />
-                  <span>
-                    <span className="block text-sm font-semibold">{r.label}</span>
-                    <span className="mt-0.5 block truncate text-xs text-blanco/60">{r.handle}</span>
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-salmon text-negro">
+                    <IconoRed name={r.icon} className="size-5" />
                   </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold leading-tight">{r.label}</span>
+                    <span className="mt-0.5 block text-sm text-blanco/65">{r.handle}</span>
+                  </span>
+                  <ArrowUpRight className="size-5 shrink-0 text-salmon transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 lg:hidden" aria-hidden="true" />
                 </a>
               ))}
             </div>
