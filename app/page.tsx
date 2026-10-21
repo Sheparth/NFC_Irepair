@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import {
   ArrowUpRight,
   BatteryCharging,
   Camera,
   Check,
+  ChevronLeft,
+  ChevronRight,
   ClipboardCheck,
   Cpu,
   Droplets,
@@ -24,7 +26,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-// Marca según el Manual de Marca iRepair Arequipa: logotipo solo con el nombre (sin manzana),
+// Marca iRepair Arequipa (manual de marca): logotipo oficial con su manzana (decisión del cliente),
 // paleta salmón / roble / negro + blanco / crema / dorado, Montserrat (títulos) e Inter (textos),
 // títulos en tipo oración y tono experto, honesto y cercano.
 
@@ -108,7 +110,7 @@ function IconoRed({ name, className = 'size-5' }: { name: string; className?: st
   )
 }
 
-/** Logotipo oficial "iRepair Arequipa" (sin manzana, según el manual): negro sobre claro, blanco sobre oscuro. */
+/** Logotipo oficial "iRepair Arequipa": negro sobre claro, blanco sobre oscuro. */
 function Logo({ claro = false, className = 'h-9' }: { claro?: boolean; className?: string }) {
   return <img src={claro ? '/logo-irepair-blanco.png' : '/logo-irepair-negro.png'} alt="iRepair Arequipa" className={`w-auto ${className}`} />
 }
@@ -134,8 +136,11 @@ function Circuito({ className = '' }: { className?: string }) {
   )
 }
 
-/** Celular ilustrado (genérico) que muestra el avance de una reparación. */
-function CelularReparacion() {
+/**
+ * Celular en 3D que gira (solo CSS: transform 3D en la GPU, sin librerías ni modelos que descargar).
+ * Al frente, el avance de una reparación; atrás, el módulo de cámaras y el logo. Se pausa al tocarlo.
+ */
+function Celular3D() {
   const etapas = ['Diagnóstico', 'Repuesto elegido', 'Reparando', '¡Listo hoy!']
   const [etapa, setEtapa] = useState(0)
   useEffect(() => {
@@ -144,11 +149,25 @@ function CelularReparacion() {
   }, [etapas.length])
 
   return (
-    <div className="relative mx-auto w-[230px] sm:w-[260px]" aria-hidden="true">
-      <div className="absolute -inset-6 rounded-[3rem] bg-dorado/20 blur-2xl" />
-      <div className="relative rounded-[2.6rem] border-[10px] border-negro bg-negro shadow-[0_30px_60px_-20px_rgba(0,0,0,.6)]">
-        <div className="absolute left-1/2 top-2 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-negro" />
-        <div className="overflow-hidden rounded-[2rem] bg-blanco px-4 pb-6 pt-10">
+    <div className="escena-3d relative mx-auto" aria-hidden="true">
+      <div className="absolute inset-x-6 -inset-y-6 rounded-[3rem] bg-dorado/25 blur-3xl" />
+      <div className="cel-3d">
+        <div className="cel-cara cel-atras">
+          <div className="cel-camaras">
+            <span />
+            <span />
+            <span />
+          </div>
+          <img src="/logo-irepair-blanco.png" alt="" className="absolute bottom-[18%] left-1/2 w-[62%] -translate-x-1/2 opacity-90" />
+        </div>
+        <span className="cel-lado cel-lado-der" />
+        <span className="cel-lado cel-lado-izq" />
+        <span className="cel-lado cel-lado-sup" />
+        <span className="cel-lado cel-lado-inf" />
+        <div className="cel-cara cel-frente">
+          <span className="cel-brillo" />
+          <div className="absolute left-1/2 top-3 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-negro" />
+          <div className="h-full overflow-hidden rounded-[1.9rem] bg-blanco px-4 pb-5 pt-11">
           <p className="font-display text-sm font-semibold">Tu reparación</p>
           <p className="text-[11px] text-negro/55">Orden #0247 · Cayma</p>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-crema">
@@ -166,6 +185,168 @@ function CelularReparacion() {
             ))}
           </ul>
           <div className="mt-4 rounded-xl bg-negro px-3 py-2.5 text-center text-[11px] font-semibold text-blanco">Garantía por escrito</div>
+          </div>
+        </div>
+      </div>
+      <div className="cel-sombra" />
+    </div>
+  )
+}
+
+type Diapositiva = {
+  etiqueta: string
+  titulo: string
+  texto: string
+  boton: string
+  accion: { servicio?: string; ancla: string }
+  tema: 'salmon' | 'negro' | 'roble' | 'crema'
+  dibujo: 'pantalla' | 'bateria' | 'chip' | 'gota' | 'balanza' | 'mapa'
+}
+
+const diapositivas: Diapositiva[] = [
+  { etiqueta: 'Pantallas', titulo: '¿Pantalla rota?', texto: 'Original o genérica: te explicamos la diferencia y la cambiamos hoy cuando es posible.', boton: 'Cotizar pantalla', accion: { servicio: 'pantalla', ancla: '#cotizar' }, tema: 'negro', dibujo: 'pantalla' },
+  { etiqueta: 'Baterías', titulo: 'Batería que no dura', texto: 'Revisamos su salud y te decimos con honestidad si conviene cambiarla.', boton: 'Cotizar batería', accion: { servicio: 'bateria', ancla: '#cotizar' }, tema: 'salmon', dibujo: 'bateria' },
+  { etiqueta: 'Laboratorio', titulo: 'Microsoldadura y chip IC', texto: 'Lo que otros talleres no reparan: placa, transplante de chip y True Tone.', boton: 'Cotizar placa', accion: { servicio: 'placa', ancla: '#cotizar' }, tema: 'roble', dibujo: 'chip' },
+  { etiqueta: 'Urgente', titulo: '¿Se mojó? Tráelo ya', texto: 'Apágalo, no lo cargues y tráelo cuanto antes: el tiempo cuenta.', boton: 'Escríbenos ahora', accion: { servicio: 'liquido', ancla: '#cotizar' }, tema: 'negro', dibujo: 'gota' },
+  { etiqueta: 'Transparencia', titulo: 'Original o genérico', texto: 'Tú eliges el repuesto. Garantía por escrito siempre.', boton: 'Ver la diferencia', accion: { ancla: '#proceso' }, tema: 'crema', dibujo: 'balanza' },
+  { etiqueta: 'Sedes', titulo: 'Cayma y Miraflores', texto: 'Dos locales en Arequipa, el mismo equipo de especialistas.', boton: 'Cómo llegar', accion: { ancla: '#sedes' }, tema: 'salmon', dibujo: 'mapa' },
+]
+
+const TEMAS: Record<Diapositiva['tema'], { caja: string; etiqueta: string; boton: string; trazo: string }> = {
+  salmon: { caja: 'bg-gradient-to-br from-[#f2b597] via-salmon to-[#cf8a66] text-negro', etiqueta: 'bg-negro text-blanco', boton: 'bg-negro text-blanco', trazo: 'text-negro' },
+  negro: { caja: 'bg-gradient-to-br from-[#2a221d] via-negro to-black text-blanco', etiqueta: 'bg-salmon text-negro', boton: 'bg-salmon text-negro', trazo: 'text-salmon' },
+  roble: { caja: 'madera text-blanco', etiqueta: 'bg-negro text-blanco', boton: 'bg-blanco text-negro', trazo: 'text-blanco' },
+  crema: { caja: 'bg-gradient-to-br from-blanco via-crema to-[#dcc6a6] text-negro', etiqueta: 'bg-negro text-blanco', boton: 'bg-negro text-blanco', trazo: 'text-roble' },
+}
+
+/** Ilustraciones técnicas de línea para el carrusel. */
+function Dibujo({ tipo, className = '' }: { tipo: Diapositiva['dibujo']; className?: string }) {
+  const comun = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  return (
+    <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
+      {tipo === 'pantalla' && (
+        <g {...comun}>
+          <rect x="34" y="10" width="52" height="100" rx="10" />
+          <path className="dibujo-anim" d="M48 30l10 14-8 10 14 12-6 14 10 10" />
+          <path d="M54 18h12" />
+        </g>
+      )}
+      {tipo === 'bateria' && (
+        <g {...comun}>
+          <rect x="24" y="36" width="66" height="48" rx="9" />
+          <path d="M90 52h6v16h-6" />
+          <rect className="dibujo-carga" x="31" y="43" width="52" height="34" rx="4" fill="currentColor" stroke="none" opacity=".35" />
+          <path d="M60 46l-9 15h12l-8 14" />
+        </g>
+      )}
+      {tipo === 'chip' && (
+        <g {...comun}>
+          <rect x="34" y="34" width="52" height="52" rx="8" />
+          <rect x="46" y="46" width="28" height="28" rx="4" />
+          <path d="M46 34V22M60 34V22M74 34V22M46 98V86M60 98V86M74 98V86M34 46H22M34 60H22M34 74H22M98 46H86M98 60H86M98 74H86" />
+          <circle className="dibujo-pulso" cx="60" cy="60" r="5" fill="currentColor" stroke="none" />
+        </g>
+      )}
+      {tipo === 'gota' && (
+        <g {...comun}>
+          <path className="dibujo-gota" d="M60 14C48 34 36 48 36 66a24 24 0 0 0 48 0c0-18-12-32-24-52Z" />
+          <path d="M50 70a10 10 0 0 0 10 10" />
+        </g>
+      )}
+      {tipo === 'balanza' && (
+        <g {...comun}>
+          <path d="M60 18v84M36 102h48M28 34h64" />
+          <g className="dibujo-balanza">
+            <path d="M28 34l-12 30h24L28 34ZM92 34L80 64h24L92 34Z" />
+            <path d="M16 64a12 8 0 0 0 24 0M80 64a12 8 0 0 0 24 0" />
+          </g>
+        </g>
+      )}
+      {tipo === 'mapa' && (
+        <g {...comun}>
+          <path d="M14 30l28-10 36 12 28-10v68l-28 10-36-12-28 10Z" />
+          <path d="M42 20v68M78 32v68" />
+          <path className="dibujo-pulso" d="M60 46c0 10-10 18-10 18s-10-8-10-18a10 10 0 0 1 20 0Z" />
+        </g>
+      )}
+    </svg>
+  )
+}
+
+/** Carrusel de mensajes con acceso directo (deslizable; avanza solo y se pausa al tocarlo). */
+function Carrusel({ alElegir }: { alElegir: (accion: Diapositiva['accion']) => void }) {
+  const pista = useRef<HTMLDivElement>(null)
+  const [actual, setActual] = useState(0)
+  const pausa = useRef(false)
+
+  const ir = useCallback((i: number) => {
+    const el = pista.current
+    if (!el) return
+    const n = (i + diapositivas.length) % diapositivas.length
+    const hijo = el.children[n] as HTMLElement | undefined
+    if (hijo) el.scrollTo({ left: hijo.offsetLeft - el.offsetLeft, behavior: 'smooth' })
+  }, [])
+
+  useEffect(() => {
+    const el = pista.current
+    if (!el) return
+    const alMover = () => {
+      const ancho = (el.children[0] as HTMLElement | undefined)?.offsetWidth ?? 1
+      setActual(Math.round(el.scrollLeft / (ancho + 16)))
+    }
+    el.addEventListener('scroll', alMover, { passive: true })
+    const t = setInterval(() => {
+      if (!pausa.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) ir(actualRef.current + 1)
+    }, 4500)
+    return () => {
+      el.removeEventListener('scroll', alMover)
+      clearInterval(t)
+    }
+  }, [ir])
+
+  const actualRef = useRef(0)
+  actualRef.current = actual
+
+  return (
+    <div onPointerEnter={() => (pausa.current = true)} onPointerLeave={() => (pausa.current = false)} onTouchStart={() => (pausa.current = true)}>
+      <div ref={pista} className="carrusel -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-8 sm:px-8">
+        {diapositivas.map((d) => {
+          const t = TEMAS[d.tema]
+          return (
+            <article key={d.titulo} className={`relative flex min-h-[300px] w-[85%] shrink-0 snap-center flex-col overflow-hidden rounded-[1.75rem] p-6 shadow-[0_24px_50px_-24px_rgba(0,0,0,.6)] sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)] ${t.caja}`}>
+              <Circuito className={`pointer-events-none absolute -right-16 -top-10 w-72 opacity-[0.14] ${t.trazo}`} />
+              <Dibujo tipo={d.dibujo} className={`absolute -bottom-2 -right-2 size-36 opacity-90 ${t.trazo}`} />
+              <span className={`relative w-fit rounded-full px-3 py-1 text-xs font-semibold ${t.etiqueta}`}>{d.etiqueta}</span>
+              <h3 className="relative mt-4 max-w-[80%] font-display text-2xl font-bold leading-[1.15]">{d.titulo}</h3>
+              <p className="relative mt-2 max-w-[70%] text-sm leading-[1.5] opacity-85">{d.texto}</p>
+              <button type="button" onClick={() => alElegir(d.accion)} className={`relative mt-auto inline-flex w-fit items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5 ${t.boton}`}>
+                {d.boton} <ArrowUpRight className="size-4" aria-hidden="true" />
+              </button>
+            </article>
+          )
+        })}
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex gap-1.5" role="tablist" aria-label="Mensajes">
+          {diapositivas.map((d, i) => (
+            <button
+              key={d.titulo}
+              type="button"
+              role="tab"
+              aria-selected={i === actual}
+              aria-label={d.titulo}
+              onClick={() => ir(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${i === actual ? 'w-8 bg-negro' : 'w-2 bg-negro/30'}`}
+            />
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => ir(actual - 1)} aria-label="Anterior" className="grid size-10 place-items-center rounded-full bg-negro text-blanco transition hover:bg-black">
+            <ChevronLeft className="size-5" />
+          </button>
+          <button type="button" onClick={() => ir(actual + 1)} aria-label="Siguiente" className="grid size-10 place-items-center rounded-full bg-negro text-blanco transition hover:bg-black">
+            <ChevronRight className="size-5" />
+          </button>
         </div>
       </div>
     </div>
@@ -182,6 +363,22 @@ export default function Page() {
   const servicio = servicios.find((s) => s.id === servicioId) ?? servicios[0]
   const sede = sedes.find((s) => s.id === sedeId) ?? sedes[0]
   const mensaje = `Hola iRepair, quiero cotizar: ${servicio.nombre.toLowerCase()}. Sede ${sede.nombre}.`
+
+  // Transiciones: cada bloque .revelar aparece suavemente al entrar en pantalla.
+  useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>(".revelar")
+    const io = new IntersectionObserver(
+      (entradas) => entradas.forEach((e) => e.isIntersecting && (e.target.classList.add("revelado"), io.unobserve(e.target))),
+      { rootMargin: "0px 0px -8% 0px" },
+    )
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+
+  const elegir = (accion: Diapositiva["accion"]) => {
+    if (accion.servicio) setServicioId(accion.servicio)
+    document.querySelector(accion.ancla)?.scrollIntoView({ behavior: "smooth" })
+  }
 
   useEffect(() => {
     if (!verQr || qr) return
@@ -245,13 +442,42 @@ export default function Page() {
                 ))}
               </dl>
             </div>
-            <CelularReparacion />
+            <Celular3D />
           </div>
         </div>
       </section>
 
+      {/* Accesos rápidos */}
+      <section aria-label="Accesos rápidos" className="revelar mx-auto max-w-6xl px-4 pt-6 sm:px-8 sm:pt-8">
+        <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-6 sm:px-0">
+          {[
+            { href: wa(sedes[0], "Hola iRepair, quiero cotizar una reparación en Cayma."), label: "WhatsApp Cayma", icono: <MessageCircle className="size-5" aria-hidden="true" />, externo: true },
+            { href: wa(sedes[1], "Hola iRepair, quiero cotizar una reparación en Miraflores."), label: "WhatsApp Miraflores", icono: <MessageCircle className="size-5" aria-hidden="true" />, externo: true },
+            { href: "#sedes", label: "Cómo llegar", icono: <MapPin className="size-5" aria-hidden="true" />, externo: false },
+            { href: RESENA, label: "Reseña Google", icono: <Star className="size-5" aria-hidden="true" />, externo: true },
+            { href: redes[0].href, label: "Instagram", icono: <IconoRed name="instagram" />, externo: true },
+            { href: redes[1].href, label: "TikTok", icono: <IconoRed name="tiktok" />, externo: true },
+          ].map((a) => (
+            <a
+              key={a.label}
+              href={a.href}
+              {...(a.externo ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className="flex min-w-[118px] shrink-0 flex-col items-center gap-2 rounded-2xl bg-negro/90 px-3 py-4 text-center text-xs font-semibold text-blanco shadow-lg backdrop-blur transition hover:-translate-y-1 hover:bg-negro"
+            >
+              <span className="grid size-11 place-items-center rounded-xl bg-salmon text-negro">{a.icono}</span>
+              {a.label}
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {/* Carrusel de mensajes */}
+      <section aria-label="Lo que hacemos" className="revelar mx-auto max-w-6xl px-4 pt-6 sm:px-8 sm:pt-8">
+        <Carrusel alElegir={elegir} />
+      </section>
+
       {/* Cotizador interactivo */}
-      <section id="servicios" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-6 sm:px-8 sm:pt-8">
+      <section id="servicios" className="revelar mx-auto max-w-6xl scroll-mt-20 px-4 pt-6 sm:px-8 sm:pt-8">
         <div id="cotizar" className="scroll-mt-20 rounded-[2rem] bg-blanco p-6 shadow-[0_30px_70px_-30px_rgba(0,0,0,.55)] sm:p-10">
           <p className="text-sm font-semibold text-roble">Servicios</p>
           <h2 className="mt-1 font-display text-3xl font-bold leading-[1.2] sm:text-4xl">¿Qué le pasa a tu equipo?</h2>
@@ -316,7 +542,7 @@ export default function Page() {
       </section>
 
       {/* Original vs genérico + proceso */}
-      <section id="proceso" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-6 sm:px-8 sm:pt-8">
+      <section id="proceso" className="revelar mx-auto max-w-6xl scroll-mt-20 px-4 pt-6 sm:px-8 sm:pt-8">
         <div className="relative overflow-hidden rounded-[2rem] bg-negro p-6 text-blanco shadow-[0_30px_70px_-30px_rgba(0,0,0,.7)] sm:p-10">
           <Circuito className="pointer-events-none absolute -bottom-10 -left-10 w-[480px] text-dorado/[0.13]" />
           <div className="relative grid gap-10 lg:grid-cols-2">
@@ -370,7 +596,7 @@ export default function Page() {
       </section>
 
       {/* Sedes */}
-      <section id="sedes" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-6 sm:px-8 sm:pt-8">
+      <section id="sedes" className="revelar mx-auto max-w-6xl scroll-mt-20 px-4 pt-6 sm:px-8 sm:pt-8">
         <div className="rounded-[2rem] bg-crema p-6 shadow-[0_30px_70px_-30px_rgba(0,0,0,.55)] sm:p-10">
           <p className="text-sm font-semibold text-roble">Visítanos</p>
           <h2 className="mt-1 font-display text-3xl font-bold leading-[1.2] sm:text-4xl">Nuestras sedes</h2>
@@ -405,7 +631,7 @@ export default function Page() {
       </section>
 
       {/* Redes, reseña y QR */}
-      <section id="redes" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-6 sm:px-8 sm:py-8">
+      <section id="redes" className="revelar mx-auto max-w-6xl scroll-mt-20 px-4 py-6 sm:px-8 sm:py-8">
         <div className="grid gap-5 rounded-[2rem] bg-blanco p-6 shadow-[0_30px_70px_-30px_rgba(0,0,0,.55)] sm:p-10 lg:grid-cols-[1.2fr_1fr]">
           <div>
             <p className="text-sm font-semibold text-roble">Redes</p>

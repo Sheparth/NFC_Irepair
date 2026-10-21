@@ -57,6 +57,65 @@ body {
   }
 }
 
+/* ── Celular 3D (solo CSS: se dibuja en la GPU, no descarga nada) ── */
+.escena-3d { --w: 230px; --h: 470px; --t: 22px; width: var(--w); height: calc(var(--h) + 60px); perspective: 1400px; }
+@media (min-width: 640px) { .escena-3d { --w: 250px; --h: 510px; } }
+.cel-3d { position: relative; width: var(--w); height: var(--h); transform-style: preserve-3d; animation: girar 14s cubic-bezier(.45, .05, .55, .95) infinite; }
+.escena-3d:hover .cel-3d, .escena-3d:active .cel-3d { animation-play-state: paused; }
+@keyframes girar {
+  0% { transform: rotateX(8deg) rotateY(-28deg); }
+  30% { transform: rotateX(4deg) rotateY(28deg); }
+  50% { transform: rotateX(6deg) rotateY(180deg); }
+  70% { transform: rotateX(4deg) rotateY(300deg); }
+  100% { transform: rotateX(8deg) rotateY(332deg); }
+}
+.cel-cara { position: absolute; inset: 0; border-radius: 2.4rem; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.cel-cara * { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.cel-frente { transform: translateZ(calc(var(--t) / 2)); background: #0c0c0c; padding: 9px; box-shadow: inset 0 0 0 2px #3a3a3a; overflow: hidden; }
+.cel-atras { transform: rotateY(180deg) translateZ(calc(var(--t) / 2)); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .08);
+  background: radial-gradient(120% 70% at 30% 20%, #3a2e27, #161616 60%), #161616; }
+.cel-camaras { position: absolute; left: 9%; top: 5%; width: 46%; aspect-ratio: 1; border-radius: 26%; background: linear-gradient(145deg, #2c2420, #0e0c0b); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .1), 0 6px 14px rgba(0, 0, 0, .5); }
+.cel-camaras span { position: absolute; width: 38%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #4a5d7a 0 10%, #0b0f17 28%, #000 60%); box-shadow: 0 0 0 3px #1c1c1c, 0 0 0 4.5px #4a4a4a; }
+.cel-camaras span:nth-child(1) { left: 8%; top: 8%; }
+.cel-camaras span:nth-child(2) { left: 8%; bottom: 8%; }
+.cel-camaras span:nth-child(3) { right: 8%; top: 31%; }
+.cel-lado { position: absolute; background: linear-gradient(90deg, #2b2b2b, #6b6b6b 45%, #2b2b2b); }
+.cel-lado-der, .cel-lado-izq { top: 2.2rem; bottom: 2.2rem; width: var(--t); left: calc(50% - var(--t) / 2); }
+.cel-lado-der { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); }
+.cel-lado-izq { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+.cel-lado-sup, .cel-lado-inf { left: 2.2rem; right: 2.2rem; height: var(--t); top: calc(50% - var(--t) / 2); background: linear-gradient(180deg, #2b2b2b, #6b6b6b 45%, #2b2b2b); }
+.cel-lado-sup { transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); }
+.cel-lado-inf { transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); }
+.cel-brillo { position: absolute; inset: 0; z-index: 20; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / .22) 45%, transparent 60%); background-size: 250% 100%; animation: brillo 7s ease-in-out infinite; }
+@keyframes brillo { 0%, 100% { background-position: 120% 0; } 50% { background-position: -20% 0; } }
+.cel-sombra { margin: 26px auto 0; width: 70%; height: 22px; border-radius: 50%; background: rgb(0 0 0 / .35); filter: blur(10px); animation: sombra 14s ease-in-out infinite; }
+@keyframes sombra { 0%, 100% { transform: scaleX(.85); } 50% { transform: scaleX(1); } }
+
+/* ── Transiciones al bajar ── */
+.revelar { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .8, .2, 1); }
+.revelar.revelado { opacity: 1; transform: none; }
+
+/* ── Carrusel ── */
+.carrusel { scrollbar-width: none; scroll-behavior: smooth; }
+.carrusel::-webkit-scrollbar { display: none; }
+.dibujo-anim { stroke-dasharray: 90; animation: trazo 3s ease-in-out infinite alternate; }
+@keyframes trazo { from { stroke-dashoffset: 90; } to { stroke-dashoffset: 0; } }
+.dibujo-carga { transform-origin: 31px 60px; animation: carga 2.6s ease-in-out infinite; }
+@keyframes carga { 0% { transform: scaleX(.15); } 100% { transform: scaleX(1); } }
+.dibujo-pulso { transform-box: fill-box; transform-origin: center; animation: pulso 1.6s ease-in-out infinite; }
+@keyframes pulso { 50% { transform: scale(1.35); opacity: .6; } }
+.dibujo-gota { animation: gota 2.4s ease-in-out infinite; }
+@keyframes gota { 50% { transform: translateY(6px); } }
+.dibujo-balanza { transform-origin: 60px 34px; animation: balanza 3s ease-in-out infinite; }
+@keyframes balanza { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cel-3d { animation: none; transform: rotateX(6deg) rotateY(-20deg); }
+  .cel-brillo, .cel-sombra, .dibujo-anim, .dibujo-carga, .dibujo-pulso, .dibujo-gota, .dibujo-balanza { animation: none; }
+  .revelar { opacity: 1; transform: none; transition: none; }
+}
+
 /* Madera roble de los locales (listones verticales) */
 .madera {
   background:
