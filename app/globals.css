@@ -29,6 +29,34 @@ body {
   line-height: 1.5;
 }
 
+/* Fondo de toda la página: listones de roble como los paneles de los locales, con veta y luz cálida arriba */
+.madera-fondo {
+  background-color: var(--color-roble);
+  background-image:
+    radial-gradient(120% 60% at 50% 0%, rgb(255 225 180 / 0.28), transparent 60%),
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.16) 0 2px, transparent 2px 64px),
+    repeating-linear-gradient(90deg, transparent 0 18px, rgb(255 255 255 / 0.04) 18px 20px, transparent 20px 37px, rgb(0 0 0 / 0.035) 37px 39px, transparent 39px 64px),
+    repeating-linear-gradient(178deg, transparent 0 7px, rgb(80 50 20 / 0.05) 7px 8px, transparent 8px 19px),
+    linear-gradient(180deg, #b8916a 0%, #a8804f 100%);
+  background-attachment: scroll;
+}
+
+/* Pistas de circuito: un pulso de luz recorre las líneas */
+.pista {
+  stroke-dasharray: 14 10;
+  animation: pista 6s linear infinite;
+}
+@keyframes pista {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pista {
+    animation: none;
+  }
+}
+
 /* Madera roble de los locales (listones verticales) */
 .madera {
   background:
