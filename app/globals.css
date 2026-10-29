@@ -134,3 +134,18 @@ body {
     repeating-linear-gradient(90deg, rgb(0 0 0 / 0.07) 0 2px, transparent 2px 26px, rgb(255 255 255 / 0.06) 26px 28px, transparent 28px 61px),
     linear-gradient(180deg, #bb9566, var(--color-roble) 55%, #9c7a52);
 }
+
+/* Reseña rápida (primera sección): las estrellas brillan en secuencia; al pasar o tocar se encienden hasta la elegida */
+.resena-tarjeta { animation: resena-entra .7s .35s both cubic-bezier(.22, 1, .36, 1); }
+@keyframes resena-entra { from { opacity: 0; transform: translateY(18px) scale(.97); } }
+.estrella { display: grid; place-items: center; flex: 1; padding: 6px 0; border-radius: 14px; color: var(--color-crema); transition: color .15s, transform .2s cubic-bezier(.34, 1.56, .64, 1), background-color .2s; }
+.estrella svg { animation: estrella-brillo 3.2s calc(var(--i) * .16s) ease-in-out infinite; }
+@keyframes estrella-brillo {
+  0%, 55%, 100% { color: var(--color-crema); transform: scale(1); }
+  20% { color: var(--color-dorado); transform: scale(1.14); filter: drop-shadow(0 0 8px rgb(212 175 90 / .7)); }
+}
+.estrella[data-encendida='true'] { color: var(--color-dorado); transform: translateY(-3px) scale(1.08); }
+.estrella[data-encendida='true'] svg { animation: none; color: var(--color-dorado); filter: drop-shadow(0 4px 8px rgb(212 175 90 / .55)); }
+.estrella:active { transform: scale(.9); }
+.estrella:focus-visible { outline: 3px solid var(--color-negro); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .resena-tarjeta, .estrella svg { animation: none; } }

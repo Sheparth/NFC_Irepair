@@ -225,6 +225,60 @@ function usePausarFueraDePantalla<T extends HTMLElement>() {
   return ref
 }
 
+/** "G" de Google a color. */
+function GoogleG({ className = 'size-6' }: { className?: string }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 48 48" className={className}>
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5Z" />
+      <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7Z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44Z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5Z" />
+    </svg>
+  )
+}
+
+/**
+ * Reseña en la primera sección, para que se encuentre al toque: cinco estrellas que brillan en secuencia.
+ * Tocar cualquier estrella (o el botón) abre la página de reseñas de Google, donde se elige la calificación.
+ */
+function ResenaRapida() {
+  const [encendidas, setEncendidas] = useState(0)
+  return (
+    <div id="resena" className="resena-tarjeta mt-8 max-w-md scroll-mt-24 rounded-3xl bg-blanco p-5 shadow-[0_20px_45px_-22px_rgba(0,0,0,.55)]">
+      <div className="flex items-center gap-3">
+        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white shadow-md">
+          <GoogleG />
+        </span>
+        <div>
+          <p className="font-display text-lg font-bold leading-tight">¿Ya te atendimos?</p>
+          <p className="text-sm text-negro/65">Califícanos en Google, toma un minuto.</p>
+        </div>
+      </div>
+      <div className="mt-4 flex justify-between gap-1" role="group" aria-label="Califica a iRepair en Google" onPointerLeave={() => setEncendidas(0)}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <a
+            key={n}
+            href={RESENA}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${n} ${n === 1 ? 'estrella' : 'estrellas'} en Google`}
+            onPointerEnter={() => setEncendidas(n)}
+            onFocus={() => setEncendidas(n)}
+            className="estrella"
+            data-encendida={n <= encendidas}
+            style={{ ['--i' as string]: n } as React.CSSProperties}
+          >
+            <Star className="size-9 sm:size-10" fill="currentColor" strokeWidth={1.2} aria-hidden="true" />
+          </a>
+        ))}
+      </div>
+      <a href={RESENA} target="_blank" rel="noreferrer" className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-negro px-5 py-3.5 text-sm font-semibold text-blanco transition hover:-translate-y-0.5 hover:bg-black active:scale-[0.98]">
+        Escribir mi reseña <ArrowUpRight className="size-4" aria-hidden="true" />
+      </a>
+    </div>
+  )
+}
+
 type Diapositiva = {
   etiqueta: string
   titulo: string
@@ -466,18 +520,7 @@ export default function Page() {
                   <MapPin className="size-5" aria-hidden="true" /> Ver sedes
                 </a>
               </div>
-              <dl className="mt-9 grid max-w-md grid-cols-3 gap-2 text-center">
-                {[
-                  ['2', 'sedes en Arequipa'],
-                  ['Apple', 'especialistas'],
-                  ['Hoy', 'cuando es posible'],
-                ].map(([v, t]) => (
-                  <div key={t} className="flex flex-col-reverse rounded-2xl bg-blanco/60 px-2 py-3">
-                    <dt className="text-[11px] leading-tight text-negro/65">{t}</dt>
-                    <dd className="font-display text-xl font-bold">{v}</dd>
-                  </div>
-                ))}
-              </dl>
+              <ResenaRapida />
             </div>
             <Celular3D />
           </div>
@@ -697,29 +740,61 @@ export default function Page() {
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-3 lg:justify-end">
-            <a href={RESENA} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl bg-salmon px-5 py-4 font-semibold transition hover:-translate-y-0.5">
-              <span className="flex items-center gap-3">
-                <Star className="size-5" aria-hidden="true" /> Déjanos tu reseña en Google
+          {/* Compartir: el QR de la página, para pasárselo a alguien que necesite reparar su equipo */}
+          <button type="button" onClick={() => setVerQr(true)} className="group flex flex-col justify-between gap-6 rounded-3xl bg-salmon p-6 text-left transition hover:-translate-y-0.5 active:scale-[0.99]">
+            <span className="grid size-14 place-items-center rounded-2xl bg-negro text-salmon transition group-hover:rotate-[-6deg]">
+              <QrCode className="size-7" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="block font-display text-2xl font-bold leading-tight">¿Un amigo con el celular roto?</span>
+              <span className="mt-1 flex items-center gap-1.5 text-[15px] font-semibold text-negro/75">
+                Compártele esta página con QR <ArrowUpRight className="size-4" aria-hidden="true" />
               </span>
-              <ArrowUpRight className="size-5" aria-hidden="true" />
-            </a>
-            <button type="button" onClick={() => setVerQr(true)} className="flex items-center justify-between rounded-2xl border-2 border-negro/15 px-5 py-4 text-left font-semibold transition hover:border-negro">
-              <span className="flex items-center gap-3">
-                <QrCode className="size-5" aria-hidden="true" /> Compartir esta página con QR
-              </span>
-              <ArrowUpRight className="size-5" aria-hidden="true" />
-            </button>
-          </div>
+            </span>
+          </button>
         </div>
       </section>
 
       {/* Pie */}
-      <footer className="bg-negro text-blanco">
-        <div className="h-px bg-dorado" />
-        <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-5 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-8">
-          <Logo claro className="h-11" />
-          <p className="font-display text-lg font-semibold">Tráelo hoy, lo tenemos listo hoy.</p>
+      <footer className="relative overflow-hidden bg-negro text-blanco">
+        <div className="h-1 bg-dorado" />
+        <Circuito className="pointer-events-none absolute -right-16 top-6 w-[460px] text-dorado/[0.1]" />
+        <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:px-8 md:grid-cols-[1.2fr_1fr_1fr]">
+          <div>
+            <Logo claro className="h-11" />
+            <p className="mt-5 max-w-xs font-display text-xl font-semibold leading-snug">Tráelo hoy, lo tenemos listo hoy.</p>
+            <p className="mt-2 max-w-xs text-sm text-blanco/60">Especialistas en iPhone y equipos Apple en Arequipa.</p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-dorado">Sedes</p>
+            <ul className="mt-3 space-y-4">
+              {sedes.map((s) => (
+                <li key={s.id}>
+                  <p className="font-display font-semibold">{s.nombre}</p>
+                  <p className="text-sm text-blanco/65">{s.direccion}</p>
+                  <a href={`tel:+51${s.telefono.replace(/\s/g, '')}`} className="text-sm font-semibold text-salmon underline-offset-4 hover:underline">
+                    {s.telefono}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-dorado">Redes</p>
+            <div className="mt-3 flex gap-2">
+              {redes.map((r) => (
+                <a key={r.label} href={r.href} target="_blank" rel="noreferrer" aria-label={`${r.label} de iRepair Arequipa`} className="grid size-11 place-items-center rounded-xl bg-blanco/10 text-salmon transition hover:-translate-y-0.5 hover:bg-salmon hover:text-negro">
+                  <IconoRed name={r.icon} className="size-5" />
+                </a>
+              ))}
+            </div>
+            <a href={RESENA} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blanco px-4 py-3 text-sm font-semibold text-negro transition hover:-translate-y-0.5">
+              <GoogleG className="size-5" /> Déjanos tu reseña
+            </a>
+          </div>
+        </div>
+        <div className="relative border-t border-blanco/10">
+          <p className="mx-auto max-w-6xl px-5 py-5 text-xs text-blanco/50 sm:px-8">© {new Date().getFullYear()} iRepair Arequipa · Cayma y Miraflores</p>
         </div>
       </footer>
 
