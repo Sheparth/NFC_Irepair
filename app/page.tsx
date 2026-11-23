@@ -1,19 +1,18 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowUpRight,
   BatteryCharging,
   Camera,
-  Check,
-  ChevronLeft,
-  ChevronRight,
   ClipboardCheck,
+  Clock,
   Cpu,
   Droplets,
   MapPin,
   MessageCircle,
   PackageCheck,
+  Phone,
   PlugZap,
   QrCode,
   ScanFace,
@@ -35,6 +34,7 @@ const sedes = [
     nombre: 'Cayma',
     direccion: 'Urubamba 323',
     telefono: '998 224 023',
+    horario: '', // ej. "Lun a sáb: 9:00 a 20:00 · Dom: 10:00 a 14:00"
     mapHref: 'https://www.google.com/maps/search/?api=1&query=-16.38882012746849,-71.54708107574045',
     mapSrc:
       'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d239.2317628096732!2d-71.54708107574045!3d-16.38882012746849!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91424b9965fcd73b%3A0x39a4ddb259561931!2sIRepair%20Arequipa!5e0!3m2!1ses-419!2spe!4v1790957828192!5m2!1ses-419!2spe',
@@ -44,6 +44,7 @@ const sedes = [
     nombre: 'Miraflores',
     direccion: 'Elías Aguirre 320',
     telefono: '942 669 970',
+    horario: '',
     mapHref: 'https://www.google.com/maps/search/?api=1&query=-16.401884390198507,-71.51569848186841',
     mapSrc:
       'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d239.2157137221865!2d-71.51569848186841!3d-16.401884390198507!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91424ba82c657e59%3A0x23056abfe697ef5e!2sElias%20Aguirre%20320%2C%20Miraflores%2004001!5e0!3m2!1ses-419!2spe!4v1790957943030!5m2!1ses-419!2spe',
@@ -51,6 +52,10 @@ const sedes = [
 ] as const
 
 type Sede = (typeof sedes)[number]
+
+// Plazo de la garantía: pendiente de confirmar por iRepair (se muestra solo en cuanto se complete)
+const PLAZO_GARANTIA = '' // ej. "3 meses"
+const garantia = PLAZO_GARANTIA ? `garantía de ${PLAZO_GARANTIA} por escrito` : 'garantía por escrito'
 
 const wa = (sede: Sede, mensaje: string) => `https://api.whatsapp.com/send?phone=51${sede.telefono.replace(/\s/g, '')}&text=${encodeURIComponent(mensaje)}`
 
@@ -69,7 +74,7 @@ const pasos: { icono: LucideIcon; titulo: string; texto: string }[] = [
   { icono: ClipboardCheck, titulo: 'Diagnóstico', texto: 'Revisamos tu equipo y encontramos la causa real.' },
   { icono: MessageCircle, titulo: 'Te explicamos', texto: 'Precio y repuesto claros: original o genérico, tú eliges.' },
   { icono: Wrench, titulo: 'Reparamos', texto: 'Especialistas en Apple, en nuestro laboratorio.' },
-  { icono: PackageCheck, titulo: 'Listo hoy', texto: 'Cuando es posible, el mismo día. Con garantía por escrito.' },
+  { icono: PackageCheck, titulo: 'Listo hoy', texto: `Cuando es posible, el mismo día. Con ${garantia}.` },
 ]
 
 const redes = [
@@ -78,7 +83,10 @@ const redes = [
   { label: 'Facebook', handle: 'iRepair Arequipa', href: 'https://www.facebook.com/p/IRepair-Arequipa-61573417760715', icon: 'facebook' },
 ]
 
+// Reseña en Google de la ficha de Cayma ("IRepair Arequipa"). Falta el enlace de la ficha de Miraflores.
 const RESENA = 'https://search.google.com/local/writereview?placeid=ChIJO9f8ZZlLQpERMRlWWbLdpDk'
+// Pendientes de confirmar por iRepair: se muestran solos en cuanto se completen.
+const CALIFICACION: { nota: number | null; resenas: number | null } = { nota: null, resenas: null }
 const PAGINA = 'https://nfc-irepair.vercel.app'
 const menu = [
   { href: '#servicios', label: 'Servicios' },
@@ -135,94 +143,9 @@ function Circuito({ className = '' }: { className?: string }) {
   )
 }
 
-/**
- * Celular en 3D que gira (solo CSS: transform 3D en la GPU, sin librerías ni modelos que descargar).
- * Al frente, el avance de una reparación; atrás, el módulo de cámaras y el logo. Se pausa al tocarlo.
- */
-function Celular3D() {
-  const etapas = ['Diagnóstico', 'Repuesto elegido', 'Reparando', '¡Listo hoy!']
-  const [etapa, setEtapa] = useState(0)
-  useEffect(() => {
-    const t = setInterval(() => setEtapa((e) => (e + 1) % etapas.length), 1800)
-    return () => clearInterval(t)
-  }, [etapas.length])
-  const ref = usePausarFueraDePantalla<HTMLDivElement>()
-
-  return (
-    <div ref={ref} className="escena-3d relative mx-auto" aria-hidden="true">
-      <div className="absolute inset-x-6 -inset-y-6 rounded-[3rem] bg-dorado/25 blur-3xl" />
-      <div className="cel-3d">
-        <div className="cel-cara cel-atras">
-          <div className="cel-camaras">
-            <span />
-            <span />
-            <span />
-          </div>
-          <img src="/logo-irepair-blanco.png" alt="" className="absolute bottom-[18%] left-1/2 w-[62%] -translate-x-1/2 opacity-90" />
-        </div>
-        {/* Canto: capas redondeadas apiladas en profundidad (bordes curvos, como un celular real) */}
-        {Array.from({ length: 9 }, (_, i) => (
-          <span key={i} className="cel-capa" style={{ ["--i" as string]: i } as React.CSSProperties} />
-        ))}
-        <div className="cel-cara cel-frente">
-          <span className="cel-brillo" />
-          <div className="absolute left-1/2 top-3 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-negro" />
-          <div className="h-full overflow-hidden rounded-[1.9rem] bg-blanco px-4 pb-5 pt-11">
-          <p className="font-display text-sm font-semibold">Tu reparación</p>
-          <p className="text-[11px] text-negro/55">Orden #0247 · Cayma</p>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-crema">
-            <div className="h-full rounded-full bg-salmon transition-all duration-700" style={{ width: `${((etapa + 1) / etapas.length) * 100}%` }} />
-          </div>
-          <ul className="mt-4 space-y-2.5">
-            {etapas.map((e, i) => (
-              <li key={e} className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium transition-colors duration-500 ${i === etapa ? 'bg-salmon/25 text-negro' : 'text-negro/55'}`}>
-                <span className={`grid size-5 place-items-center rounded-full text-[10px] transition-colors duration-500 ${i < etapa || (i === etapa && i === etapas.length - 1) ? 'bg-negro text-blanco' : i === etapa ? 'bg-salmon text-negro' : 'bg-crema text-negro/40'}`}>
-                  {i < etapa || (i === etapa && i === etapas.length - 1) ? <Check className="size-3" strokeWidth={3} /> : i + 1}
-                </span>
-                {e}
-                {i === etapa && i < etapas.length - 1 && <span className="ml-auto size-1.5 animate-ping rounded-full bg-salmon" />}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-4 rounded-xl bg-negro px-3 py-2.5 text-center text-[11px] font-semibold text-blanco">Garantía por escrito</div>
-          </div>
-        </div>
-      </div>
-      <div className="cel-sombra" />
-    </div>
-  )
-}
-
-/** Mapa de Google que solo se carga al tocarlo (cada mapa pesa varios MB: en celular se nota). */
-function MapaDiferido({ src, nombre }: { src: string; nombre: string }) {
-  const [cargar, setCargar] = useState(false)
-  if (cargar) return <iframe src={src} title={`Ubicación de iRepair en ${nombre}`} referrerPolicy="no-referrer-when-downgrade" className="h-44 w-full border-0" />
-  return (
-    <button
-      type="button"
-      onClick={() => setCargar(true)}
-      className="mapa-vista group flex h-44 w-full flex-col items-center justify-center gap-2 text-sm font-semibold text-negro"
-      aria-label={`Ver el mapa de la sede ${nombre}`}
-    >
-      <span className="grid size-12 place-items-center rounded-full bg-negro text-salmon shadow-lg transition group-active:scale-95">
-        <MapPin className="size-6" aria-hidden="true" />
-      </span>
-      Toca para ver el mapa
-    </button>
-  )
-}
-
-/** Pausa las animaciones de un bloque mientras no está en pantalla (ahorra batería en celular). */
-function usePausarFueraDePantalla<T extends HTMLElement>() {
-  const ref = useRef<T>(null)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(([e]) => el.classList.toggle('pausado', !e.isIntersecting))
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
-  return ref
+/** Mapa real de Google; el navegador lo descarga recién al acercarse a la sección (pesa varios MB). */
+function MapaSede({ src, nombre }: { src: string; nombre: string }) {
+  return <iframe src={src} title={`Ubicación de iRepair en ${nombre}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-48 w-full border-0 bg-crema" />
 }
 
 /** "G" de Google a color. */
@@ -244,16 +167,24 @@ function GoogleG({ className = 'size-6' }: { className?: string }) {
 function ResenaRapida() {
   const [encendidas, setEncendidas] = useState(0)
   return (
-    <div id="resena" className="resena-tarjeta mt-8 max-w-md scroll-mt-24 rounded-3xl bg-blanco p-5 shadow-[0_20px_45px_-22px_rgba(0,0,0,.55)]">
+    <div id="resena" className="resena-tarjeta w-full max-w-md scroll-mt-24 rounded-3xl bg-blanco p-5 shadow-[0_20px_45px_-22px_rgba(0,0,0,.55)] sm:p-6 lg:justify-self-end">
       <div className="flex items-center gap-3">
         <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white shadow-md">
           <GoogleG />
         </span>
         <div>
-          <p className="font-display text-lg font-bold leading-tight">¿Ya te atendimos?</p>
-          <p className="text-sm text-negro/65">Califícanos en Google, toma un minuto.</p>
+          <p className="font-display text-lg font-bold leading-tight">¿Te gustó la atención?</p>
+          <p className="text-sm text-negro/65">Déjanos tu reseña en Google, toma un minuto.</p>
         </div>
       </div>
+      {/* Prueba social: aparece en cuanto se cargue la calificación real de la ficha */}
+      {CALIFICACION.nota && (
+        <p className="mt-3 flex items-center gap-2 rounded-xl bg-crema/60 px-3 py-2 text-sm font-semibold">
+          <Star className="size-4 text-dorado" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+          {CALIFICACION.nota.toFixed(1)} en Google
+          {CALIFICACION.resenas && <span className="font-normal text-negro/60">· {CALIFICACION.resenas} reseñas</span>}
+        </p>
+      )}
       <div className="mt-4 flex justify-between gap-1" role="group" aria-label="Califica a iRepair en Google" onPointerLeave={() => setEncendidas(0)}>
         {[1, 2, 3, 4, 5].map((n) => (
           <a
@@ -275,171 +206,6 @@ function ResenaRapida() {
       <a href={RESENA} target="_blank" rel="noreferrer" className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-negro px-5 py-3.5 text-sm font-semibold text-blanco transition hover:-translate-y-0.5 hover:bg-black active:scale-[0.98]">
         Escribir mi reseña <ArrowUpRight className="size-4" aria-hidden="true" />
       </a>
-    </div>
-  )
-}
-
-type Diapositiva = {
-  etiqueta: string
-  titulo: string
-  texto: string
-  boton: string
-  accion: { servicio?: string; ancla: string }
-  tema: 'salmon' | 'negro' | 'roble' | 'crema'
-  dibujo: 'pantalla' | 'bateria' | 'chip' | 'gota' | 'balanza' | 'mapa'
-}
-
-const diapositivas: Diapositiva[] = [
-  { etiqueta: 'Pantallas', titulo: '¿Pantalla rota?', texto: 'Original o genérica: te explicamos la diferencia y la cambiamos hoy cuando es posible.', boton: 'Cotizar pantalla', accion: { servicio: 'pantalla', ancla: '#cotizar' }, tema: 'negro', dibujo: 'pantalla' },
-  { etiqueta: 'Baterías', titulo: 'Batería que no dura', texto: 'Revisamos su salud y te decimos con honestidad si conviene cambiarla.', boton: 'Cotizar batería', accion: { servicio: 'bateria', ancla: '#cotizar' }, tema: 'salmon', dibujo: 'bateria' },
-  { etiqueta: 'Laboratorio', titulo: 'Microsoldadura y chip IC', texto: 'Lo que otros talleres no reparan: placa, transplante de chip y True Tone.', boton: 'Cotizar placa', accion: { servicio: 'placa', ancla: '#cotizar' }, tema: 'roble', dibujo: 'chip' },
-  { etiqueta: 'Urgente', titulo: '¿Se mojó? Tráelo ya', texto: 'Apágalo, no lo cargues y tráelo cuanto antes: el tiempo cuenta.', boton: 'Escríbenos ahora', accion: { servicio: 'liquido', ancla: '#cotizar' }, tema: 'negro', dibujo: 'gota' },
-  { etiqueta: 'Transparencia', titulo: 'Original o genérico', texto: 'Tú eliges el repuesto. Garantía por escrito siempre.', boton: 'Ver la diferencia', accion: { ancla: '#proceso' }, tema: 'crema', dibujo: 'balanza' },
-  { etiqueta: 'Sedes', titulo: 'Cayma y Miraflores', texto: 'Dos locales en Arequipa, el mismo equipo de especialistas.', boton: 'Cómo llegar', accion: { ancla: '#sedes' }, tema: 'salmon', dibujo: 'mapa' },
-]
-
-const TEMAS: Record<Diapositiva['tema'], { caja: string; etiqueta: string; boton: string; trazo: string }> = {
-  salmon: { caja: 'bg-gradient-to-br from-[#f2b597] via-salmon to-[#cf8a66] text-negro', etiqueta: 'bg-negro text-blanco', boton: 'bg-negro text-blanco', trazo: 'text-negro' },
-  negro: { caja: 'bg-gradient-to-br from-[#2a221d] via-negro to-black text-blanco', etiqueta: 'bg-salmon text-negro', boton: 'bg-salmon text-negro', trazo: 'text-salmon' },
-  roble: { caja: 'madera text-blanco', etiqueta: 'bg-negro text-blanco', boton: 'bg-blanco text-negro', trazo: 'text-blanco' },
-  crema: { caja: 'bg-gradient-to-br from-blanco via-crema to-[#dcc6a6] text-negro', etiqueta: 'bg-negro text-blanco', boton: 'bg-negro text-blanco', trazo: 'text-roble' },
-}
-
-/** Ilustraciones técnicas de línea para el carrusel. */
-function Dibujo({ tipo, className = '' }: { tipo: Diapositiva['dibujo']; className?: string }) {
-  const comun = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
-  return (
-    <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
-      {tipo === 'pantalla' && (
-        <g {...comun}>
-          <rect x="34" y="10" width="52" height="100" rx="10" />
-          <path className="dibujo-anim" d="M48 30l10 14-8 10 14 12-6 14 10 10" />
-          <path d="M54 18h12" />
-        </g>
-      )}
-      {tipo === 'bateria' && (
-        <g {...comun}>
-          <rect x="24" y="36" width="66" height="48" rx="9" />
-          <path d="M90 52h6v16h-6" />
-          <rect className="dibujo-carga" x="31" y="43" width="52" height="34" rx="4" fill="currentColor" stroke="none" opacity=".35" />
-          <path d="M60 46l-9 15h12l-8 14" />
-        </g>
-      )}
-      {tipo === 'chip' && (
-        <g {...comun}>
-          <rect x="34" y="34" width="52" height="52" rx="8" />
-          <rect x="46" y="46" width="28" height="28" rx="4" />
-          <path d="M46 34V22M60 34V22M74 34V22M46 98V86M60 98V86M74 98V86M34 46H22M34 60H22M34 74H22M98 46H86M98 60H86M98 74H86" />
-          <circle className="dibujo-pulso" cx="60" cy="60" r="5" fill="currentColor" stroke="none" />
-        </g>
-      )}
-      {tipo === 'gota' && (
-        <g {...comun}>
-          <path className="dibujo-gota" d="M60 14C48 34 36 48 36 66a24 24 0 0 0 48 0c0-18-12-32-24-52Z" />
-          <path d="M50 70a10 10 0 0 0 10 10" />
-        </g>
-      )}
-      {tipo === 'balanza' && (
-        <g {...comun}>
-          <path d="M60 18v84M36 102h48M28 34h64" />
-          <g className="dibujo-balanza">
-            <path d="M28 34l-12 30h24L28 34ZM92 34L80 64h24L92 34Z" />
-            <path d="M16 64a12 8 0 0 0 24 0M80 64a12 8 0 0 0 24 0" />
-          </g>
-        </g>
-      )}
-      {tipo === 'mapa' && (
-        <g {...comun}>
-          <path d="M14 30l28-10 36 12 28-10v68l-28 10-36-12-28 10Z" />
-          <path d="M42 20v68M78 32v68" />
-          <path className="dibujo-pulso" d="M60 46c0 10-10 18-10 18s-10-8-10-18a10 10 0 0 1 20 0Z" />
-        </g>
-      )}
-    </svg>
-  )
-}
-
-/** Carrusel de mensajes con acceso directo (deslizable; avanza solo y se pausa al tocarlo). */
-function Carrusel({ alElegir }: { alElegir: (accion: Diapositiva['accion']) => void }) {
-  const pista = useRef<HTMLDivElement>(null)
-  const [actual, setActual] = useState(0)
-  const pausa = useRef(false)
-
-  const ir = useCallback((i: number) => {
-    const el = pista.current
-    if (!el) return
-    const n = (i + diapositivas.length) % diapositivas.length
-    const hijo = el.children[n] as HTMLElement | undefined
-    if (hijo) el.scrollTo({ left: hijo.offsetLeft - el.offsetLeft, behavior: 'smooth' })
-  }, [])
-
-  useEffect(() => {
-    const el = pista.current
-    if (!el) return
-    const alMover = () => {
-      const ancho = (el.children[0] as HTMLElement | undefined)?.offsetWidth ?? 1
-      setActual(Math.round(el.scrollLeft / (ancho + 16)))
-    }
-    el.addEventListener('scroll', alMover, { passive: true })
-    // Solo avanza solo cuando se ve en pantalla.
-    let visible = false
-    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting))
-    io.observe(el)
-    const t = setInterval(() => {
-      if (visible && !pausa.current && !document.hidden && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) ir(actualRef.current + 1)
-    }, 4500)
-    return () => {
-      el.removeEventListener('scroll', alMover)
-      io.disconnect()
-      clearInterval(t)
-    }
-  }, [ir])
-
-  const actualRef = useRef(0)
-  actualRef.current = actual
-
-  return (
-    <div onPointerEnter={() => (pausa.current = true)} onPointerLeave={() => (pausa.current = false)} onTouchStart={() => (pausa.current = true)}>
-      <div ref={pista} className="carrusel -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-8 sm:px-8">
-        {diapositivas.map((d) => {
-          const t = TEMAS[d.tema]
-          return (
-            <article key={d.titulo} className={`relative flex min-h-[300px] w-[85%] shrink-0 snap-center flex-col overflow-hidden rounded-[1.75rem] p-6 shadow-[0_24px_50px_-24px_rgba(0,0,0,.6)] sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)] ${t.caja}`}>
-              <Circuito className={`pointer-events-none absolute -right-16 -top-10 w-72 opacity-[0.14] ${t.trazo}`} />
-              <Dibujo tipo={d.dibujo} className={`absolute -bottom-2 -right-2 size-36 opacity-90 ${t.trazo}`} />
-              <span className={`relative w-fit rounded-full px-3 py-1 text-xs font-semibold ${t.etiqueta}`}>{d.etiqueta}</span>
-              <h3 className="relative mt-4 max-w-[80%] font-display text-2xl font-bold leading-[1.15]">{d.titulo}</h3>
-              <p className="relative mt-2 max-w-[70%] text-sm leading-[1.5] opacity-85">{d.texto}</p>
-              <button type="button" onClick={() => alElegir(d.accion)} className={`relative mt-auto inline-flex w-fit items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition hover:-translate-y-0.5 ${t.boton}`}>
-                {d.boton} <ArrowUpRight className="size-4" aria-hidden="true" />
-              </button>
-            </article>
-          )
-        })}
-      </div>
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="flex gap-1.5" role="tablist" aria-label="Mensajes">
-          {diapositivas.map((d, i) => (
-            <button
-              key={d.titulo}
-              type="button"
-              role="tab"
-              aria-selected={i === actual}
-              aria-label={d.titulo}
-              onClick={() => ir(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${i === actual ? 'w-8 bg-negro' : 'w-2 bg-negro/30'}`}
-            />
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={() => ir(actual - 1)} aria-label="Anterior" className="grid size-10 place-items-center rounded-full bg-negro text-blanco transition hover:bg-black">
-            <ChevronLeft className="size-5" />
-          </button>
-          <button type="button" onClick={() => ir(actual + 1)} aria-label="Siguiente" className="grid size-10 place-items-center rounded-full bg-negro text-blanco transition hover:bg-black">
-            <ChevronRight className="size-5" />
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
@@ -466,20 +232,15 @@ export default function Page() {
     return () => io.disconnect()
   }, [])
 
-  const elegir = (accion: Diapositiva["accion"]) => {
-    if (accion.servicio) setServicioId(accion.servicio)
-    document.querySelector(accion.ancla)?.scrollIntoView({ behavior: "smooth" })
-  }
-
   useEffect(() => {
     if (!verQr || qr) return
     import('qrcode').then(({ default: QRCode }) => QRCode.toDataURL(PAGINA, { width: 480, margin: 2, color: { dark: '#161616', light: '#ffffff' } }).then(setQr))
   }, [verQr, qr])
 
   return (
-    <main className="madera-fondo min-h-screen pb-28 text-negro lg:pb-0">
-      {/* Menú superior */}
-      <header className="sticky top-0 z-40 border-b border-negro/10 bg-blanco/95">
+    <main className="madera-fondo min-h-screen text-negro">
+      {/* Menú superior (opaco: así no se transparenta el contenido al hacer scroll) */}
+      <header className="sticky top-0 z-40 border-b border-negro/10 bg-blanco shadow-[0_6px_20px_-12px_rgba(0,0,0,.45)]">
         <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <a href="#inicio" aria-label="iRepair Arequipa, inicio">
             <Logo />
@@ -493,7 +254,8 @@ export default function Page() {
               </li>
             ))}
           </ul>
-          <a href="#cotizar" className="inline-flex items-center gap-2 rounded-full bg-negro px-4 py-2.5 text-sm font-semibold text-blanco transition hover:bg-black">
+          {/* En celular "Cotizar" ya está en la barra inferior: arriba solo se muestra en pantallas grandes */}
+          <a href="#cotizar" className="hidden items-center gap-2 rounded-full bg-negro px-4 py-2.5 text-sm font-semibold text-blanco transition hover:bg-black lg:inline-flex">
             <MessageCircle className="size-4" aria-hidden="true" /> Cotizar
           </a>
         </nav>
@@ -503,14 +265,14 @@ export default function Page() {
       <section id="inicio" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-5 sm:px-8 sm:pt-8">
         <div className="relative overflow-hidden rounded-[2rem] bg-salmon shadow-[0_30px_70px_-30px_rgba(0,0,0,.6)]">
           <Circuito className="pointer-events-none absolute -right-10 -top-6 w-[520px] text-negro/[0.09]" />
-          <div className="relative grid items-center gap-10 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-[1.15fr_0.85fr] lg:px-14">
+          <div className="relative grid items-center gap-8 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12 lg:px-14">
             <div>
               <p className="inline-flex items-center gap-2 rounded-full bg-negro px-3.5 py-1.5 text-xs font-semibold text-blanco">
                 <span className="size-1.5 rounded-full bg-dorado" /> Especialistas en iPhone y equipos Apple
               </p>
               <h1 className="mt-6 font-display text-[2.6rem] font-bold leading-[1.15] tracking-[-0.02em] sm:text-6xl">Tráelo hoy, lo tenemos listo hoy.</h1>
               <p className="mt-5 max-w-md text-base leading-[1.6] text-negro/80">
-                Diagnóstico honesto, repuestos que te explicamos con transparencia y garantía por escrito. En Cayma y Miraflores.
+                Diagnóstico honesto, repuestos que te explicamos con transparencia y {garantia}. En Cayma y Miraflores.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a href="#cotizar" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-negro px-6 py-4 text-sm font-semibold text-blanco shadow-lg transition hover:-translate-y-0.5 hover:bg-black">
@@ -520,16 +282,16 @@ export default function Page() {
                   <MapPin className="size-5" aria-hidden="true" /> Ver sedes
                 </a>
               </div>
-              <ResenaRapida />
             </div>
-            <Celular3D />
+            <ResenaRapida />
           </div>
         </div>
       </section>
 
       {/* Accesos rápidos */}
       <section aria-label="Accesos rápidos" className="revelar mx-auto max-w-6xl px-4 pt-6 sm:px-8 sm:pt-8">
-        <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-6 sm:px-0">
+        {/* En celular, grilla de 3 × 2: todos los accesos se ven completos, sin desplazar ni cortar */}
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
           {[
             { href: wa(sedes[0], "Hola iRepair, quiero cotizar una reparación en Cayma."), label: "WhatsApp Cayma", icono: <MessageCircle className="size-5" aria-hidden="true" />, externo: true },
             { href: wa(sedes[1], "Hola iRepair, quiero cotizar una reparación en Miraflores."), label: "WhatsApp Miraflores", icono: <MessageCircle className="size-5" aria-hidden="true" />, externo: true },
@@ -542,18 +304,13 @@ export default function Page() {
               key={a.label}
               href={a.href}
               {...(a.externo ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="flex min-w-[118px] shrink-0 flex-col items-center gap-2 rounded-2xl bg-negro/90 px-3 py-4 text-center text-xs font-semibold text-blanco shadow-lg transition hover:-translate-y-1 hover:bg-negro"
+              className="flex min-w-0 flex-col items-center gap-2 rounded-2xl bg-negro/90 px-2 py-4 text-center text-xs font-semibold leading-tight text-blanco shadow-lg transition hover:-translate-y-1 hover:bg-negro active:scale-[0.97]"
             >
               <span className="grid size-11 place-items-center rounded-xl bg-salmon text-negro">{a.icono}</span>
               {a.label}
             </a>
           ))}
         </div>
-      </section>
-
-      {/* Carrusel de mensajes */}
-      <section aria-label="Lo que hacemos" className="revelar mx-auto max-w-6xl px-4 pt-6 sm:px-8 sm:pt-8">
-        <Carrusel alElegir={elegir} />
       </section>
 
       {/* Cotizador interactivo */}
@@ -687,23 +444,34 @@ export default function Page() {
                   <div>
                     <h3 className="font-display text-2xl font-semibold">{s.nombre}</h3>
                     <p className="mt-1 text-negro/70">{s.direccion}</p>
-                    <a href={`tel:+51${s.telefono.replace(/\s/g, '')}`} className="mt-1 inline-block font-semibold underline-offset-4 hover:underline">
-                      {s.telefono}
-                    </a>
+                    {s.horario && (
+                      <p className="mt-2 flex items-start gap-2 text-sm font-medium">
+                        <Clock className="mt-0.5 size-4 shrink-0 text-roble" aria-hidden="true" /> {s.horario}
+                      </p>
+                    )}
                   </div>
                   <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-salmon text-negro">
                     <MapPin className="size-5" strokeWidth={1.8} aria-hidden="true" />
                   </span>
                 </div>
-                <MapaDiferido src={s.mapSrc} nombre={s.nombre} />
-                <div className="grid grid-cols-2 gap-2 p-4">
-                  <a href={wa(s, `Hola iRepair, quiero información de la sede ${s.nombre}.`)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-negro px-3 py-3 text-sm font-semibold text-blanco transition hover:bg-black">
+                <MapaSede src={s.mapSrc} nombre={s.nombre} />
+                <div className="grid grid-cols-3 gap-2 p-4">
+                  <a href={`tel:+51${s.telefono.replace(/\s/g, '')}`} aria-label={`Llamar a la sede ${s.nombre}: ${s.telefono}`} className="flex flex-col items-center justify-center gap-1 rounded-xl bg-salmon px-2 py-3 text-xs font-semibold transition hover:brightness-95 active:scale-[0.97] sm:flex-row sm:gap-2 sm:text-sm">
+                    <Phone className="size-4" aria-hidden="true" /> Llamar
+                  </a>
+                  <a href={wa(s, `Hola iRepair, quiero información de la sede ${s.nombre}.`)} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-1 rounded-xl bg-negro px-2 py-3 text-xs font-semibold text-blanco transition hover:bg-black active:scale-[0.97] sm:flex-row sm:gap-2 sm:text-sm">
                     <MessageCircle className="size-4" aria-hidden="true" /> WhatsApp
                   </a>
-                  <a href={s.mapHref} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl border border-negro/15 px-3 py-3 text-sm font-semibold transition hover:border-salmon hover:bg-salmon/20">
+                  <a href={s.mapHref} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-1 rounded-xl border border-negro/15 px-2 py-3 text-xs font-semibold transition hover:border-salmon hover:bg-salmon/20 active:scale-[0.97] sm:flex-row sm:gap-2 sm:text-sm">
                     <MapPin className="size-4" aria-hidden="true" /> Cómo llegar
                   </a>
                 </div>
+                <p className="-mt-2 pb-4 text-center text-sm text-negro/60">
+                  Teléfono:{' '}
+                  <a href={`tel:+51${s.telefono.replace(/\s/g, '')}`} className="font-semibold text-negro underline underline-offset-4">
+                    {s.telefono}
+                  </a>
+                </p>
               </article>
             ))}
           </div>
@@ -772,6 +540,7 @@ export default function Page() {
                 <li key={s.id}>
                   <p className="font-display font-semibold">{s.nombre}</p>
                   <p className="text-sm text-blanco/65">{s.direccion}</p>
+                  {s.horario && <p className="text-sm text-blanco/65">{s.horario}</p>}
                   <a href={`tel:+51${s.telefono.replace(/\s/g, '')}`} className="text-sm font-semibold text-salmon underline-offset-4 hover:underline">
                     {s.telefono}
                   </a>
@@ -794,7 +563,8 @@ export default function Page() {
           </div>
         </div>
         <div className="relative border-t border-blanco/10">
-          <p className="mx-auto max-w-6xl px-5 py-5 text-xs text-blanco/50 sm:px-8">© {new Date().getFullYear()} iRepair Arequipa · Cayma y Miraflores</p>
+          {/* En celular deja espacio para la barra inferior fija, así no tapa el final de la página */}
+          <p className="mx-auto max-w-6xl px-5 pb-28 pt-5 text-xs text-blanco/50 sm:px-8 lg:pb-5">© {new Date().getFullYear()} iRepair Arequipa · Cayma y Miraflores</p>
         </div>
       </footer>
 
