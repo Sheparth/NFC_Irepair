@@ -86,7 +86,14 @@ const redes = [
 // Reseña en Google de la ficha de Cayma ("IRepair Arequipa"). Falta el enlace de la ficha de Miraflores.
 const RESENA = 'https://search.google.com/local/writereview?placeid=ChIJO9f8ZZlLQpERMRlWWbLdpDk'
 // Pendientes de confirmar por iRepair: se muestran solos en cuanto se completen.
-const CALIFICACION: { nota: number | null; resenas: number | null } = { nota: null, resenas: null }
+// Ficha de Google de Cayma al 23/11/2026 (actualizar a mano cada cierto tiempo)
+const CALIFICACION: { nota: number | null; resenas: number | null } = { nota: 4.0, resenas: 46 }
+// Reseñas destacadas copiadas a mano de la ficha de Google (solo nombre e inicial del apellido).
+// La sección "Lo que dicen nuestros clientes" aparece en cuanto haya al menos una.
+const RESENAS_DESTACADAS: { nombre: string; texto: string; estrellas: number }[] = [
+  // { nombre: 'María G.', texto: 'Me cambiaron la pantalla el mismo día y me explicaron todo.', estrellas: 5 },
+]
+const FICHA_GOOGLE = 'https://www.google.com/maps/place/?q=place_id:ChIJO9f8ZZlLQpERMRlWWbLdpDk'
 const PAGINA = 'https://nfc-irepair.vercel.app'
 const menu = [
   { href: '#servicios', label: 'Servicios' },
@@ -431,6 +438,55 @@ export default function Page() {
           </div>
         </div>
       </section>
+
+      {/* Prueba social: calificación y reseñas destacadas de Google (cargadas a mano) */}
+      {(CALIFICACION.nota || RESENAS_DESTACADAS.length > 0) && (
+        <section id="resenas" className="revelar mx-auto max-w-6xl scroll-mt-20 px-4 pt-6 sm:px-8 sm:pt-8">
+          <div className="rounded-[2rem] bg-blanco p-6 shadow-[0_30px_70px_-30px_rgba(0,0,0,.55)] sm:p-10">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-roble">Reseñas en Google</p>
+                <h2 className="mt-1 font-display text-3xl font-bold leading-[1.2] sm:text-4xl">Lo que dicen nuestros clientes</h2>
+              </div>
+              {CALIFICACION.nota && (
+                <div className="flex items-center gap-3 rounded-2xl bg-crema/60 px-4 py-3">
+                  <GoogleG className="size-8" />
+                  <div>
+                    <p className="flex items-center gap-1.5 font-display text-2xl font-bold leading-none">
+                      {CALIFICACION.nota.toFixed(1)}
+                      <Star className="size-5 text-dorado" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+                    </p>
+                    {CALIFICACION.resenas && <p className="text-sm text-negro/60">{CALIFICACION.resenas} reseñas</p>}
+                  </div>
+                </div>
+              )}
+            </div>
+            {RESENAS_DESTACADAS.length > 0 && (
+              <div className="mt-6 grid gap-3 md:grid-cols-3">
+                {RESENAS_DESTACADAS.map((r) => (
+                  <figure key={r.nombre + r.texto.slice(0, 12)} className="flex flex-col rounded-2xl bg-crema/40 p-5">
+                    <span className="flex gap-0.5 text-dorado" aria-label={`${r.estrellas} de 5 estrellas`}>
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <Star key={i} className="size-4" fill={i < r.estrellas ? 'currentColor' : 'none'} strokeWidth={1.5} aria-hidden="true" />
+                      ))}
+                    </span>
+                    <blockquote className="mt-3 flex-1 text-[15px] leading-[1.6] text-negro/85">“{r.texto}”</blockquote>
+                    <figcaption className="mt-4 text-sm font-semibold">{r.nombre}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            )}
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              <a href={FICHA_GOOGLE} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-negro/15 px-5 py-3.5 text-sm font-semibold transition hover:border-negro">
+                Ver todas en Google <ArrowUpRight className="size-4" aria-hidden="true" />
+              </a>
+              <a href={RESENA} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-negro px-5 py-3.5 text-sm font-semibold text-blanco transition hover:bg-black">
+                <GoogleG className="size-5" /> Escribir mi reseña
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Sedes */}
       <section id="sedes" className="revelar mx-auto max-w-6xl scroll-mt-20 px-4 pt-6 sm:px-8 sm:pt-8">
