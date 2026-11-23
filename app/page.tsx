@@ -34,7 +34,7 @@ const sedes = [
     nombre: 'Cayma',
     direccion: 'Urubamba 323',
     telefono: '998 224 023',
-    horario: '', // ej. "Lun a sáb: 9:00 a 20:00 · Dom: 10:00 a 14:00"
+    horario: 'Lunes a sábado: 9 a. m. a 8 p. m.',
     mapHref: 'https://www.google.com/maps/search/?api=1&query=-16.38882012746849,-71.54708107574045',
     mapSrc:
       'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d239.2317628096732!2d-71.54708107574045!3d-16.38882012746849!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91424b9965fcd73b%3A0x39a4ddb259561931!2sIRepair%20Arequipa!5e0!3m2!1ses-419!2spe!4v1790957828192!5m2!1ses-419!2spe',
@@ -44,7 +44,7 @@ const sedes = [
     nombre: 'Miraflores',
     direccion: 'Elías Aguirre 320',
     telefono: '942 669 970',
-    horario: '',
+    horario: 'Lunes a sábado: 9 a. m. a 8 p. m.',
     mapHref: 'https://www.google.com/maps/search/?api=1&query=-16.401884390198507,-71.51569848186841',
     mapSrc:
       'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d239.2157137221865!2d-71.51569848186841!3d-16.401884390198507!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91424ba82c657e59%3A0x23056abfe697ef5e!2sElias%20Aguirre%20320%2C%20Miraflores%2004001!5e0!3m2!1ses-419!2spe!4v1790957943030!5m2!1ses-419!2spe',
