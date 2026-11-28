@@ -53,9 +53,6 @@ const sedes = [
 
 type Sede = (typeof sedes)[number]
 
-// Plazo de la garantía: pendiente de confirmar por iRepair (se muestra solo en cuanto se complete)
-const PLAZO_GARANTIA = '' // ej. "3 meses"
-const garantia = PLAZO_GARANTIA ? `garantía de ${PLAZO_GARANTIA} por escrito` : 'garantía por escrito'
 
 const wa = (sede: Sede, mensaje: string) => `https://api.whatsapp.com/send?phone=51${sede.telefono.replace(/\s/g, '')}&text=${encodeURIComponent(mensaje)}`
 
@@ -74,7 +71,7 @@ const pasos: { icono: LucideIcon; titulo: string; texto: string }[] = [
   { icono: ClipboardCheck, titulo: 'Diagnóstico', texto: 'Revisamos tu equipo y encontramos la causa real.' },
   { icono: MessageCircle, titulo: 'Te explicamos', texto: 'Precio y repuesto claros: original o genérico, tú eliges.' },
   { icono: Wrench, titulo: 'Reparamos', texto: 'Especialistas en Apple, en nuestro laboratorio.' },
-  { icono: PackageCheck, titulo: 'Listo hoy', texto: `Cuando es posible, el mismo día. Con ${garantia}.` },
+  { icono: PackageCheck, titulo: 'Listo hoy', texto: 'Cuando es posible, el mismo día. Con garantía.' },
 ]
 
 const redes = [
@@ -279,7 +276,7 @@ export default function Page() {
               </p>
               <h1 className="mt-6 font-display text-[2.6rem] font-bold leading-[1.15] tracking-[-0.02em] sm:text-6xl">Tráelo hoy, lo tenemos listo hoy.</h1>
               <p className="mt-5 max-w-md text-base leading-[1.6] text-negro/80">
-                Diagnóstico honesto, repuestos que te explicamos con transparencia y {garantia}. En Cayma y Miraflores.
+                Diagnóstico honesto, repuestos que te explicamos con transparencia y garantía en cada reparación. En Cayma y Miraflores.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a href="#cotizar" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-negro px-6 py-4 text-sm font-semibold text-blanco shadow-lg transition hover:-translate-y-0.5 hover:bg-black">
@@ -410,7 +407,7 @@ export default function Page() {
               <ul className="mt-5 space-y-3">
                 {(repuesto === 'original'
                   ? ['Pieza de la misma especificación que trae tu equipo de fábrica.', 'La opción con la que tu equipo queda como era.', 'Te la recomendamos cuando la función lo exige.']
-                  : ['Alternativa más económica para que tu equipo vuelva a funcionar.', 'Te decimos con honestidad qué cambia respecto a la original.', 'Garantía por escrito igual, según el tipo de repuesto.']
+                  : ['Alternativa más económica para que tu equipo vuelva a funcionar.', 'Te decimos con honestidad qué cambia respecto a la original.', 'También con garantía, según el tipo de repuesto.']
                 ).map((t) => (
                   <li key={t} className="flex gap-3 text-[15px] leading-[1.5] text-blanco/85">
                     <ShieldCheck className="mt-0.5 size-5 shrink-0 text-salmon" aria-hidden="true" /> {t}
@@ -540,7 +537,7 @@ export default function Page() {
           <div>
             <p className="text-sm font-semibold text-roble">Redes</p>
             <h2 className="mt-1 font-display text-3xl font-bold leading-[1.2] sm:text-4xl">Mira nuestro trabajo</h2>
-            <p className="mt-2 text-negro/70">Reparaciones reales, antes y después.</p>
+            <p className="mt-2 text-negro/70">Síguenos para ver nuestras novedades y consejos.</p>
             {/* En celular: filas a todo el ancho (nombre y usuario completos); en pantallas grandes: 3 columnas */}
             <div className="mt-6 grid gap-2.5 lg:grid-cols-3 lg:gap-3">
               {redes.map((r) => (
